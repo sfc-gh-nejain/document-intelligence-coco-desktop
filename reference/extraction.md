@@ -24,6 +24,27 @@ This sub-skill is triggered when the user selects:
 
 If documents exceed these limits, use chunking strategies (see "Large Document Strategies" section below).
 
+## Cost Information
+
+**IMPORTANT: Show this cost information to the user when first using AI_EXTRACT:**
+
+```
+AI_EXTRACT Pricing:
+- Approximately 970 tokens per page
+- Cost: 5 credits per million tokens
+- Estimated cost per page: ~0.00485 credits
+
+Example cost estimates:
+- 1 page: ~0.005 credits
+- 10 pages: ~0.05 credits
+- 50 pages: ~0.24 credits
+- 125 pages (max): ~0.61 credits
+
+Formula: (pages × 970 tokens) / 1,000,000 × 5 credits
+
+Tip: Use page optimization to extract only specific pages and reduce costs.
+```
+
 ## Workflow
 
 ```

@@ -18,6 +18,23 @@ This sub-skill is triggered when the user selects:
 | Max pages | 500 per call |
 | Output format | Markdown |
 
+## Cost Information
+
+**IMPORTANT: Show this cost information to the user when first using AI_PARSE_DOCUMENT:**
+
+```
+AI_PARSE_DOCUMENT Pricing:
+- Cost: 0.02 credits per page
+
+Example cost estimates:
+- 10 pages: 0.2 credits
+- 50 pages: 1.0 credits
+- 100 pages: 2.0 credits
+- 500 pages: 10.0 credits
+
+Tip: Use page_filter to process only the pages you need and reduce costs.
+```
+
 ## Supported Formats
 
 PDF, PNG, PPTX/PPT, DOC/DOCX, JPEG/JPG, HTM/HTML, TEXT/TXT, TIF/TIFF, BMP, GIF, WEBP
