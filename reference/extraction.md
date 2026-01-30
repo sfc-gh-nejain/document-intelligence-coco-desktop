@@ -42,7 +42,167 @@ Define Fields → Select Test File → Run Test → Review Results
 
 ## Step 1: Define Initial Extraction Fields
 
-**Ask** user for the fields they want to extract:
+### First, Identify Document Type
+
+**Ask** user what type of document they are processing:
+
+```
+What type of document are you extracting from?
+Examples: invoice, receipt, contract, purchase order, resume, medical form, insurance claim, etc.
+```
+
+### Suggest Common Fields Based on Document Type
+
+Based on the document type, **suggest commonly found fields** to help the user:
+
+#### Invoices / Bills
+```
+Common fields found in invoices:
+- invoice_number: Invoice or bill number
+- invoice_date: Date the invoice was issued
+- due_date: Payment due date
+- vendor_name: Name of vendor/supplier
+- vendor_address: Vendor's address
+- customer_name: Bill-to customer name
+- customer_address: Customer's billing address
+- subtotal: Amount before tax
+- tax_amount: Tax amount
+- total_amount: Total amount due
+- payment_terms: Payment terms (Net 30, etc.)
+- po_number: Purchase order reference
+
+Common tables:
+- line_items: Description, Quantity, Unit Price, Amount
+```
+
+#### Receipts
+```
+Common fields found in receipts:
+- store_name: Merchant/store name
+- store_address: Store location
+- receipt_date: Transaction date
+- receipt_time: Transaction time
+- receipt_number: Receipt/transaction number
+- subtotal: Amount before tax
+- tax_amount: Sales tax
+- total_amount: Total paid
+- payment_method: Cash, Credit Card, etc.
+- card_last_four: Last 4 digits of card (if applicable)
+
+Common tables:
+- items_purchased: Item name, Quantity, Price
+```
+
+#### Contracts / Agreements
+```
+Common fields found in contracts:
+- contract_title: Title or name of agreement
+- effective_date: When contract takes effect
+- expiration_date: When contract expires
+- party_a_name: First party name
+- party_a_address: First party address
+- party_b_name: Second party name
+- party_b_address: Second party address
+- contract_value: Total contract value
+- payment_terms: Payment schedule/terms
+- governing_law: Jurisdiction/governing law
+- signatory_names: Names of signers
+- signature_date: Date signed
+```
+
+#### Purchase Orders (POs)
+```
+Common fields found in purchase orders:
+- po_number: Purchase order number
+- po_date: Date PO was created
+- vendor_name: Supplier name
+- vendor_address: Supplier address
+- ship_to_address: Delivery address
+- bill_to_address: Billing address
+- requested_delivery_date: Expected delivery
+- subtotal: Amount before tax
+- shipping_cost: Shipping/freight charges
+- tax_amount: Tax
+- total_amount: Total PO value
+- payment_terms: Payment terms
+- buyer_name: Purchaser/buyer name
+
+Common tables:
+- order_items: Item number, Description, Quantity, Unit Price, Total
+```
+
+#### Resumes / CVs
+```
+Common fields found in resumes:
+- candidate_name: Full name
+- email: Email address
+- phone: Phone number
+- address: Location/address
+- linkedin_url: LinkedIn profile
+- summary: Professional summary/objective
+- total_experience_years: Years of experience
+
+Common tables:
+- work_experience: Company, Title, Start Date, End Date, Description
+- education: Institution, Degree, Field, Graduation Date
+- skills: Skill name, Proficiency level
+- certifications: Certification name, Issuer, Date
+```
+
+#### Medical Forms / Records
+```
+Common fields found in medical forms:
+- patient_name: Patient full name
+- date_of_birth: Patient DOB
+- patient_id: Medical record number
+- visit_date: Date of visit/service
+- provider_name: Physician/provider name
+- facility_name: Hospital/clinic name
+- diagnosis_codes: ICD codes
+- procedure_codes: CPT codes
+- insurance_id: Insurance member ID
+- insurance_name: Insurance company
+
+Common tables:
+- medications: Drug name, Dosage, Frequency
+- lab_results: Test name, Value, Reference range
+- procedures: Procedure, Date, Provider
+```
+
+#### Insurance Claims
+```
+Common fields found in insurance claims:
+- claim_number: Claim reference number
+- policy_number: Insurance policy number
+- claimant_name: Name of claimant
+- date_of_loss: Date incident occurred
+- date_filed: Date claim was filed
+- claim_type: Type of claim
+- claim_amount: Amount claimed
+- deductible: Deductible amount
+- approved_amount: Amount approved
+- claim_status: Status (pending, approved, denied)
+- adjuster_name: Claims adjuster
+```
+
+#### Bank Statements
+```
+Common fields found in bank statements:
+- account_holder: Account holder name
+- account_number: Account number (may be masked)
+- statement_period: Start and end date
+- opening_balance: Balance at start
+- closing_balance: Balance at end
+- total_deposits: Sum of deposits
+- total_withdrawals: Sum of withdrawals
+
+Common tables:
+- transactions: Date, Description, Amount, Balance
+```
+
+### Ask User for Fields
+
+After suggesting common fields, **ask** user to confirm or customize:
 
 ```
 What fields do you want to extract? Please provide field names and descriptions.
