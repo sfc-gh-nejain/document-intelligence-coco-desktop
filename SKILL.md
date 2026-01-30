@@ -320,3 +320,68 @@ The pipeline sub-skill contains templates for all document processing patterns.
 ## Output
 
 Routes user to appropriate sub-skill with gathered context, then assists with post-processing.
+
+---
+
+## CRITICAL: Follow-Up Questions and New Extraction Requests
+
+**ALWAYS re-evaluate the best flow when user asks a follow-up question or wants to extract something different.**
+
+Do NOT assume the same flow applies. Each new request may require a different approach.
+
+### When to Re-Evaluate
+
+Re-evaluate the flow selection when user:
+- Asks to extract different fields or data
+- Wants to try a different approach
+- Mentions a different document or file
+- Asks follow-up questions about extraction
+- Says "what about...", "can you also...", "now extract...", "try instead..."
+- Expresses dissatisfaction with current results
+
+### Re-Evaluation Process
+
+**Ask** the user (or determine from context):
+
+```
+For this new request, let me determine the best approach.
+
+What do you want to extract?
+1. Specific fields or tables → Flow A (Extraction with AI_EXTRACT)
+2. Full text with layout → Flow B (Parsing with AI_PARSE_DOCUMENT)
+3. Visual content (charts, blueprints) → Flow C (Visual Analysis with AI_COMPLETE)
+```
+
+### Flow Selection Guide
+
+| User Wants | Best Flow | Why |
+|------------|-----------|-----|
+| Named fields (invoice_number, date, vendor) | **Flow A: Extraction** | AI_EXTRACT returns structured JSON |
+| Table data with known columns | **Flow A: Extraction** | AI_EXTRACT handles tables well |
+| Full document text with structure | **Flow B: Parsing** | AI_PARSE_DOCUMENT preserves layout |
+| OCR from scanned documents | **Flow B: Parsing** | AI_PARSE_DOCUMENT OCR mode |
+| Chart/graph interpretation | **Flow C: Visual Analysis** | AI_COMPLETE vision understands images |
+| Blueprint/diagram analysis | **Flow C: Visual Analysis** | AI_COMPLETE vision for complex visuals |
+| Photo/screenshot analysis | **Flow C: Visual Analysis** | AI_COMPLETE vision for image content |
+
+### Example Scenarios
+
+**Scenario 1:** User extracted invoice fields (Flow A), now asks "can you also get the full text?"
+→ Re-evaluate: Full text = **Flow B (Parsing)**, not Flow A
+
+**Scenario 2:** User parsed document text (Flow B), now asks "extract just the table of line items"
+→ Re-evaluate: Specific table = **Flow A (Extraction)**, not Flow B
+
+**Scenario 3:** User extracted fields (Flow A), now asks "analyze the chart on page 3"
+→ Re-evaluate: Chart analysis = **Flow C (Visual Analysis)**, not Flow A
+
+**Scenario 4:** User analyzed a chart (Flow C), now asks "get all the data points as a table"
+→ Stay on **Flow C** but use structured output prompt, OR switch to **Flow A** if chart is embedded in PDF
+
+### Never Assume
+
+❌ **Wrong:** "Since we used AI_EXTRACT before, let me continue with that..."
+✅ **Right:** "For extracting the full text with layout, AI_PARSE_DOCUMENT (Flow B) is the better approach."
+
+❌ **Wrong:** "I'll use the same approach for this new request..."
+✅ **Right:** "Let me determine which flow is best for extracting chart data - that would be Visual Analysis (Flow C)."
