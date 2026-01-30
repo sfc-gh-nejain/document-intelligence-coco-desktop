@@ -310,6 +310,16 @@ Arabic, Bengali, Burmese, Cebuano, Chinese, Czech, Dutch, English, French, Germa
 
 ---
 
-## Next Steps
+## Next Steps: Post-Processing
 
-After parsing, proceed to reference `ai-parse-doc.md` for detailed function options and advanced usage.
+After parsing is complete, **ask the user** what they want to do next:
+
+→ **Load `reference/pipeline.md`** for post-processing options:
+- One-time parsing (done)
+- Store results in a Snowflake table
+- Set up a continuous processing pipeline with streams and tasks
+- Build RAG/search integration with vector embeddings
+
+The pipeline sub-skill contains templates for parsing pipelines and page-level chunking patterns.
+
+For detailed AI_PARSE_DOCUMENT function options, see `reference/ai-parse-doc-and-ai-complete.md`.

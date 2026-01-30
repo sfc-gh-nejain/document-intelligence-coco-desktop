@@ -28,11 +28,13 @@ This skill uses reference documentation for detailed function guidance:
 | **Extraction** | `reference/extraction.md` | Flow A: Structured field/table extraction workflow |
 | **Parsing** | `reference/parsing.md` | Flow B: Full content parsing workflow |
 | **Visual Analysis** | `reference/visual-analysis.md` | Flow C: Charts, blueprints, diagrams analysis |
+| **Pipeline** | `reference/pipeline.md` | Post-processing: pipelines, storage, RAG integration |
 
 **Load sub-skill based on user's extraction goal:**
 - For structured fields/tables → Read `reference/extraction.md`
 - For full text with layout or OCR → Read `reference/parsing.md`
 - For charts, blueprints, diagrams → Read `reference/visual-analysis.md`
+- After any flow completes → Read `reference/pipeline.md` for post-processing
 
 ## When to Use
 
@@ -291,31 +293,15 @@ Options:
 
 ### Step 3: Post-Processing Options
 
-After extraction/parsing is complete, **ask** user:
+After extraction/parsing/visual analysis is complete, **route to pipeline sub-skill**:
 
-```
-What would you like to do next?
-Options:
-1. Done - one-time extraction
-2. Store results in a Snowflake table
-3. Set up a pipeline for continuous processing
-4. Build RAG/search integration
-```
+→ **Load `reference/pipeline.md`** to guide user through post-processing options:
+- One-time extraction (done)
+- Store results in Snowflake table
+- Set up continuous processing pipeline
+- Build RAG/search integration with vector embeddings
 
-**If pipeline setup requested:**
-```sql
--- Create stream on stage
-CREATE OR REPLACE STREAM doc_stream ON STAGE @my_stage;
-
--- Create task for continuous processing
-CREATE OR REPLACE TASK process_docs
-  WAREHOUSE = my_warehouse
-  SCHEDULE = '1 MINUTE'
-WHEN SYSTEM$STREAM_HAS_DATA('doc_stream')
-AS
-  INSERT INTO extracted_data
-  SELECT ... FROM doc_stream;
-```
+The pipeline sub-skill contains templates for all document processing patterns.
 
 ## Key Constraints
 
