@@ -35,7 +35,7 @@ document-intelligence/
     ├── extraction.md                           # Flow A: Structured field/table extraction
     ├── parsing.md                              # Flow B: Full content parsing
     ├── visual-analysis.md                      # Flow C: Charts, blueprints, diagrams
-    └── pipeline.md                             # Post-processing: pipelines, storage, RAG
+    └── pipeline.md                             # Post-processing: pipelines, storage
 ```
 
 ## Sub-Skills
@@ -45,7 +45,7 @@ document-intelligence/
 | **Extraction** | `reference/extraction.md` | Flow A: AI_EXTRACT for structured fields/tables |
 | **Parsing** | `reference/parsing.md` | Flow B: AI_PARSE_DOCUMENT for full text with layout |
 | **Visual Analysis** | `reference/visual-analysis.md` | Flow C: AI_COMPLETE for charts, blueprints, diagrams |
-| **Pipeline** | `reference/pipeline.md` | Post-processing: storage, pipelines, RAG integration |
+| **Pipeline** | `reference/pipeline.md` | Post-processing: storage, pipelines |
 
 ### Flow Selection
 
@@ -297,16 +297,16 @@ See [official documentation](https://docs.snowflake.com/en/user-guide/snowflake-
 
    What would you like to do with the results?
 
-   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-   │    Done     │   │   Store     │   │   Create    │   │    RAG      │
-   │  (one-time) │   │  Results    │   │  Pipeline   │   │ Integration │
-   └─────────────┘   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘
-                            │                 │                 │
-                            ▼                 ▼                 ▼
-                     ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-                     │CREATE TABLE │   │  Stream +   │   │ Embeddings  │
-                     │  + INSERT   │   │    Task     │   │   + Vector  │
-                     └─────────────┘   └─────────────┘   └─────────────┘
+   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+   │    Done     │   │   Store     │   │   Create    │
+   │  (one-time) │   │  Results    │   │  Pipeline   │
+   └─────────────┘   └──────┬──────┘   └──────┬──────┘
+                            │                 │
+                            ▼                 ▼
+                     ┌─────────────┐   ┌─────────────┐
+                     │CREATE TABLE │   │  Stream +   │
+                     │  + INSERT   │   │    Task     │
+                     └─────────────┘   └─────────────┘
 
    ┌─────────────────────────────────────────────────────────────────────┐
    │ STORE RESULTS / PIPELINE CREATION - Optimization Questions        │

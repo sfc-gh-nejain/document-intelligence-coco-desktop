@@ -318,7 +318,6 @@ After parsing is complete, **ask the user** what they want to do next:
 - One-time parsing (done)
 - Store results in a Snowflake table
 - Set up a continuous processing pipeline with streams and tasks
-- Build RAG/search integration with vector embeddings
 
 The pipeline sub-skill contains templates for parsing pipelines and page-level chunking patterns.
 

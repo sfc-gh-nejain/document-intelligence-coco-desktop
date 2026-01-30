@@ -490,6 +490,5 @@ After visual analysis is complete, **ask the user** what they want to do next:
 - One-time analysis (done)
 - Store results in a Snowflake table
 - Set up a continuous processing pipeline with streams and tasks
-- Build RAG/search integration with vector embeddings
 
 The pipeline sub-skill contains templates for visual analysis pipelines including PDF-to-image conversion workflows.

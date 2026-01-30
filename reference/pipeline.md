@@ -19,7 +19,6 @@ Options:
 1. Done - one-time extraction (no pipeline needed)
 2. Store results in a Snowflake table
 3. Set up a pipeline for continuous processing
-4. Build RAG/search integration
 ```
 
 **Route based on response:**
@@ -29,7 +28,6 @@ Options:
 | Done | End workflow, display final results |
 | Store results | Create table and insert results |
 | Set up pipeline | Continue to Pipeline Setup below |
-| Build RAG/search | Continue to RAG Integration below |
 
 ---
 
@@ -677,62 +675,6 @@ ALTER TASK db.schema.extract_documents_task RESUME;
 -- Change schedule to every 15 minutes
 ALTER TASK db.schema.extract_documents_task 
   SET SCHEDULE = '15 MINUTE';
-```
-
----
-
-## RAG/Search Integration
-
-For building search and retrieval pipelines with parsed documents.
-
-### Create Search Index
-
-```sql
--- Create table for searchable content
-CREATE TABLE IF NOT EXISTS db.schema.document_search_index (
-  doc_id INT AUTOINCREMENT,
-  file_path STRING,
-  file_name STRING,
-  chunk_id INT,
-  chunk_text TEXT,
-  embedding VECTOR(FLOAT, 1024),
-  created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
-);
-
--- Populate with parsed content and embeddings
-INSERT INTO db.schema.document_search_index (file_path, file_name, chunk_id, chunk_text, embedding)
-SELECT 
-  file_path,
-  file_name,
-  page.index::INT AS chunk_id,
-  page.value:content::STRING AS chunk_text,
-  SNOWFLAKE.CORTEX.EMBED_TEXT_1024('voyage-multilingual-2', page.value:content::STRING) AS embedding
-FROM db.schema.parsed_documents,
-LATERAL FLATTEN(input => PARSE_JSON(content):pages) page;
-```
-
-### Search Function
-
-```sql
--- Create search function
-CREATE OR REPLACE FUNCTION db.schema.search_documents(query_text STRING, top_k INT DEFAULT 5)
-RETURNS TABLE (file_name STRING, chunk_text STRING, similarity FLOAT)
-AS
-$$
-  SELECT 
-    file_name,
-    chunk_text,
-    VECTOR_COSINE_SIMILARITY(
-      embedding, 
-      SNOWFLAKE.CORTEX.EMBED_TEXT_1024('voyage-multilingual-2', query_text)
-    ) AS similarity
-  FROM db.schema.document_search_index
-  ORDER BY similarity DESC
-  LIMIT top_k
-$$;
-
--- Use search function
-SELECT * FROM TABLE(db.schema.search_documents('invoice total amount', 10));
 ```
 
 ---

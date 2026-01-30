@@ -28,7 +28,7 @@ This skill uses reference documentation for detailed function guidance:
 | **Extraction** | `reference/extraction.md` | Flow A: Structured field/table extraction workflow |
 | **Parsing** | `reference/parsing.md` | Flow B: Full content parsing workflow |
 | **Visual Analysis** | `reference/visual-analysis.md` | Flow C: Charts, blueprints, diagrams analysis |
-| **Pipeline** | `reference/pipeline.md` | Post-processing: pipelines, storage, RAG integration |
+| **Pipeline** | `reference/pipeline.md` | Post-processing: pipelines, storage |
 
 **Load sub-skill based on user's extraction goal:**
 - For structured fields/tables → Read `reference/extraction.md`
@@ -72,8 +72,6 @@ Step 2: Determine Extraction Goal
 Step 3: Post-Processing Options
   ↓
   ├─→ Store results → Create table / Create pipeline
-  │
-  └─→ Build RAG/search integration
 ```
 
 ### Step 1: Gather Document Information
@@ -299,7 +297,6 @@ After extraction/parsing/visual analysis is complete, **route to pipeline sub-sk
 - One-time extraction (done)
 - Store results in Snowflake table
 - Set up continuous processing pipeline
-- Build RAG/search integration with vector embeddings
 
 The pipeline sub-skill contains templates for all document processing patterns.
 
