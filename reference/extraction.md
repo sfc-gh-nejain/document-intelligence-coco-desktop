@@ -206,19 +206,152 @@ After suggesting common fields, **ask** user to confirm or customize:
 
 ```
 What fields do you want to extract? Please provide field names and descriptions.
+
+For each field, specify the extraction type:
+1. Single Entity - one value (e.g., invoice_number, total_amount)
+2. List - multiple values of same type (e.g., all signatory names)
+3. Table - columnar data (e.g., line items with description, qty, price)
+
 Example: 
-- invoice_number: The invoice or bill number
-- vendor_name: Name of the vendor or supplier
-- total_amount: The total amount due
+- invoice_number (single): The invoice or bill number
+- vendor_name (single): Name of the vendor or supplier
+- total_amount (single): The total amount due
+- line_items (table): Description, Quantity, Unit Price, Amount
 ```
 
-Build the initial responseFormat:
+### Build responseFormat Based on Extraction Types
+
+**IMPORTANT:** AI_EXTRACT supports exactly 3 extraction types. Build the schema correctly for each type.
+
+#### Type 1: Single Entity (one value)
+
+For simple fields that extract a single value:
+
 ```sql
+-- Simple format (question string)
 responseFormat => {
   'invoice_number': 'What is the invoice number?',
   'vendor_name': 'What is the vendor name?',
   'total_amount': 'What is the total amount?'
 }
+
+-- OR Schema format (with type specification)
+responseFormat => {
+  'schema': {
+    'type': 'object',
+    'properties': {
+      'invoice_number': {
+        'type': 'string',
+        'description': 'The invoice or bill number'
+      },
+      'vendor_name': {
+        'type': 'string',
+        'description': 'Name of the vendor or supplier'
+      },
+      'total_amount': {
+        'type': 'string',
+        'description': 'The total amount due'
+      }
+    }
+  }
+}
+```
+
+#### Type 2: List (array of values)
+
+For extracting multiple values of the same type as an array:
+
+```sql
+responseFormat => {
+  'schema': {
+    'type': 'object',
+    'properties': {
+      'signatory_names': {
+        'type': 'array',
+        'items': {'type': 'string'},
+        'description': 'Names of all people who signed the document'
+      },
+      'cc_recipients': {
+        'type': 'array',
+        'items': {'type': 'string'},
+        'description': 'All CC email recipients'
+      }
+    }
+  }
+}
+```
+
+#### Type 3: Table (columnar data)
+
+For extracting structured tabular data. **Must use `column_ordering`:**
+
+```sql
+responseFormat => {
+  'schema': {
+    'type': 'object',
+    'properties': {
+      'line_items': {
+        'type': 'object',
+        'description': 'Invoice line items table',
+        'column_ordering': ['description', 'quantity', 'unit_price', 'amount'],
+        'properties': {
+          'description': {'type': 'array'},
+          'quantity': {'type': 'array'},
+          'unit_price': {'type': 'array'},
+          'amount': {'type': 'array'}
+        }
+      }
+    }
+  }
+}
+```
+
+### Combining All 3 Types in One Call
+
+A single AI_EXTRACT call can combine all extraction types:
+
+```sql
+SELECT AI_EXTRACT(
+  file => TO_FILE('@db.schema.stage', '<test_file>'),
+  responseFormat => {
+    'schema': {
+      'type': 'object',
+      'properties': {
+        -- Type 1: Single entities
+        'invoice_number': {
+          'type': 'string',
+          'description': 'Invoice number'
+        },
+        'vendor_name': {
+          'type': 'string',
+          'description': 'Vendor name'
+        },
+        'total_amount': {
+          'type': 'string',
+          'description': 'Total amount due'
+        },
+        -- Type 2: List
+        'payment_methods': {
+          'type': 'array',
+          'items': {'type': 'string'},
+          'description': 'Accepted payment methods'
+        },
+        -- Type 3: Table
+        'line_items': {
+          'type': 'object',
+          'description': 'Line items table',
+          'column_ordering': ['description', 'qty', 'price', 'amount'],
+          'properties': {
+            'description': {'type': 'array'},
+            'qty': {'type': 'array'},
+            'price': {'type': 'array'},
+            'amount': {'type': 'array'}
+          }
+        }
+      }
+    }
+  }
+) AS result;
 ```
 
 ---

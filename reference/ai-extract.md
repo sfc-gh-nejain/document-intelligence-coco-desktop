@@ -35,34 +35,186 @@ SELECT AI_EXTRACT(
 
 ## Response Format Types
 
-### Single Values
+**IMPORTANT:** AI_EXTRACT supports exactly **3 extraction types**. Each field must be one of these types. A single API call can combine all 3 types.
+
+| Type | Use Case | Schema Structure |
+|------|----------|------------------|
+| **Single Entity** | One value (invoice number, date, name) | `'field': 'question'` or `{'type': 'string', 'description': '...'}` |
+| **List** | Multiple values of same type (list of names) | `{'type': 'array', 'items': {'type': 'string'}, 'description': '...'}` |
+| **Table** | Columnar data (line items, transactions) | `{'type': 'object', 'column_ordering': [...], 'properties': {col: {'type': 'array'}}}` |
+
+---
+
+### Type 1: Single Entity (one value)
+
+Extract a single value from the document.
+
+**Simple format (question string):**
 ```sql
 responseFormat => {
   'invoice_number': 'What is the invoice number?',
-  'date': 'What is the invoice date?',
-  'total': 'What is the total amount?'
+  'invoice_date': 'What is the invoice date?',
+  'total_amount': 'What is the total amount due?'
 }
 ```
 
-### Tables (JSON Schema)
+**Schema format (with type specification):**
+```sql
+responseFormat => {
+  'schema': {
+    'type': 'object',
+    'properties': {
+      'invoice_number': {
+        'type': 'string',
+        'description': 'The invoice or bill number'
+      },
+      'invoice_date': {
+        'type': 'string',
+        'description': 'The date the invoice was issued'
+      },
+      'total_amount': {
+        'type': 'string',
+        'description': 'The total amount due including tax'
+      }
+    }
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "invoice_number": "INV-2024-001",
+  "invoice_date": "2024-01-15",
+  "total_amount": "$1,234.56"
+}
+```
+
+---
+
+### Type 2: List (array of values)
+
+Extract multiple values of the same type as an array.
+
+```sql
+responseFormat => {
+  'schema': {
+    'type': 'object',
+    'properties': {
+      'signatory_names': {
+        'type': 'array',
+        'items': {'type': 'string'},
+        'description': 'Names of all people who signed the document'
+      },
+      'mentioned_dates': {
+        'type': 'array',
+        'items': {'type': 'string'},
+        'description': 'All dates mentioned in the document'
+      }
+    }
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "signatory_names": ["John Smith", "Jane Doe", "Bob Johnson"],
+  "mentioned_dates": ["2024-01-01", "2024-06-30", "2024-12-31"]
+}
+```
+
+---
+
+### Type 3: Table (columnar data)
+
+Extract structured tabular data with multiple columns. **Must use `column_ordering` to specify column order.**
+
 ```sql
 responseFormat => {
   'schema': {
     'type': 'object',
     'properties': {
       'line_items': {
-        'description': 'Invoice line items',
         'type': 'object',
-        'column_ordering': ['item', 'qty', 'price'],
+        'description': 'Invoice line items table',
+        'column_ordering': ['description', 'quantity', 'unit_price', 'amount'],
         'properties': {
-          'item': {'type': 'array'},
-          'qty': {'type': 'array'},
-          'price': {'type': 'array'}
+          'description': {'type': 'array'},
+          'quantity': {'type': 'array'},
+          'unit_price': {'type': 'array'},
+          'amount': {'type': 'array'}
         }
       }
     }
   }
 }
+```
+
+**Output:**
+```json
+{
+  "line_items": {
+    "description": ["Widget A", "Widget B", "Service Fee"],
+    "quantity": ["10", "5", "1"],
+    "unit_price": ["$10.00", "$20.00", "$50.00"],
+    "amount": ["$100.00", "$100.00", "$50.00"]
+  }
+}
+```
+
+---
+
+## Combining All 3 Types in One Call
+
+A single AI_EXTRACT call can combine single entities, lists, and tables:
+
+```sql
+SELECT AI_EXTRACT(
+  file => TO_FILE('@stage', 'invoice.pdf'),
+  responseFormat => {
+    'schema': {
+      'type': 'object',
+      'properties': {
+        -- Type 1: Single entities
+        'invoice_number': {
+          'type': 'string',
+          'description': 'Invoice number'
+        },
+        'invoice_date': {
+          'type': 'string',
+          'description': 'Invoice date'
+        },
+        'vendor_name': {
+          'type': 'string',
+          'description': 'Vendor or supplier name'
+        },
+        'total_amount': {
+          'type': 'string',
+          'description': 'Total amount due'
+        },
+        -- Type 2: List
+        'payment_methods_accepted': {
+          'type': 'array',
+          'items': {'type': 'string'},
+          'description': 'List of accepted payment methods'
+        },
+        -- Type 3: Table
+        'line_items': {
+          'type': 'object',
+          'description': 'Invoice line items',
+          'column_ordering': ['description', 'qty', 'price', 'amount'],
+          'properties': {
+            'description': {'type': 'array'},
+            'qty': {'type': 'array'},
+            'price': {'type': 'array'},
+            'amount': {'type': 'array'}
+          }
+        }
+      }
+    }
+  }
+) AS result;
 ```
 
 ## Common Templates
