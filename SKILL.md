@@ -78,12 +78,18 @@ Step 5: Post-Processing Options
 
 ### Step 1: Determine Extraction Goal (ASK FIRST)
 
-**Ask** user what they want to extract. Allow free-form response:
+**Ask** user what they want to extract. Provide both options AND allow free-form response:
 
 ```
 What would you like to extract or analyze from your document?
 
-You can describe in your own words. Examples:
+Options:
+1. Structured extraction - Extract specific fields, tables, or data points (e.g., invoice number, line items)
+2. Full text parsing - Get complete document text with layout and formatting preserved (OCR for scans)
+3. Visual analysis - Analyze charts, graphs, diagrams, blueprints, or other visual content
+4. Multiple types - Combine any of the above (e.g., extract fields AND analyze a chart)
+
+Or describe what you need in your own words:
 - "Extract invoice number, vendor name, and total amount"
 - "Get all the text content with formatting preserved"
 - "Analyze the charts and extract data points"
@@ -276,9 +282,14 @@ Re-evaluate the flow selection when user:
 For this new request, let me determine the best approach.
 
 What do you want to extract?
-1. Specific fields or tables → Flow A (Extraction with AI_EXTRACT)
-2. Full text with layout → Flow B (Parsing with AI_PARSE_DOCUMENT)
-3. Visual content (charts, blueprints) → Flow C (Visual Analysis with AI_COMPLETE)
+
+Options:
+1. Structured extraction - Specific fields or tables (AI_EXTRACT)
+2. Full text parsing - Complete text with layout (AI_PARSE_DOCUMENT)
+3. Visual analysis - Charts, blueprints, diagrams (AI_COMPLETE)
+4. Multiple types - Combine approaches
+
+Or describe what you need in your own words.
 ```
 
 ### Flow Selection Guide
