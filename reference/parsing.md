@@ -24,15 +24,29 @@ This sub-skill is triggered when the user selects:
 
 ```
 AI_PARSE_DOCUMENT Pricing:
-- Cost: 0.02 credits per page
 
-Example cost estimates:
-- 10 pages: 0.2 credits
-- 50 pages: 1.0 credits
-- 100 pages: 2.0 credits
-- 500 pages: 10.0 credits
+LAYOUT Mode (preserves formatting, tables, structure):
+- Cost: 3.33 credits per 1,000 pages
+- Per page: ~0.00333 credits
 
-Tip: Use page_filter to process only the pages you need and reduce costs.
+OCR Mode (text extraction from scanned documents):
+- Cost: 0.5 credits per 1,000 pages
+- Per page: ~0.0005 credits
+
+Example cost estimates (LAYOUT Mode):
+- 10 pages: ~0.033 credits
+- 100 pages: ~0.333 credits
+- 500 pages: ~1.67 credits
+- 1,000 pages: 3.33 credits
+
+Example cost estimates (OCR Mode):
+- 10 pages: ~0.005 credits
+- 100 pages: ~0.05 credits
+- 500 pages: ~0.25 credits
+- 1,000 pages: 0.5 credits
+
+Tip: Use OCR mode for simple text extraction (6x cheaper than LAYOUT mode).
+     Use page_filter to process only the pages you need.
 ```
 
 ## Supported Formats
