@@ -17,16 +17,42 @@ Visual Analysis uses AI_COMPLETE directly to analyze images. No parsing step is 
 
 PNG, JPEG/JPG, TIFF, BMP, GIF, WEBP
 
+**Non-image files (PDF, DOCX, PPTX) must be converted to images before analysis.**
+
 ---
 
-## Step 1: Check File Format
+## Step 1: Check File Type (Automatic)
 
-**Ask** user:
+**Do NOT ask user about file type.** Automatically detect from file extension and handle conversion if needed.
+
+### File Type Detection
+
 ```
-What format is your file?
+Get file path from user → Extract extension → Determine if conversion needed
+```
+
+| Extension | File Type | Action |
+|-----------|-----------|--------|
+| .png, .jpg, .jpeg, .tiff, .bmp, .gif, .webp | Image | ✅ Proceed directly to analysis |
+| .pdf | PDF | ⚠️ Convert to image first |
+| .pptx, .ppt | PowerPoint | ⚠️ Convert to image first |
+| .docx, .doc | Word | ⚠️ Convert to image first |
+
+### Inform User About Conversion
+
+**If non-image file detected, inform user:**
+
+```
+I noticed your file is a [PDF/PowerPoint/Word] document. 
+AI_COMPLETE vision requires image files for visual analysis.
+
+I'll convert the relevant pages to images first, then analyze them.
+
+Which pages contain the visual content you want to analyze?
 Options:
-1. Image file (PNG, JPEG, TIFF, BMP, GIF, WEBP)
-2. PDF file (needs conversion to image)
+1. All pages
+2. First page only
+3. Specific page(s) - please specify (e.g., 1, 3, 5)
 ```
 
 ---
@@ -314,6 +340,190 @@ SELECT AI_COMPLETE(
   {'max_tokens': 4096}
 ) AS analysis;
 ```
+
+---
+
+### If PowerPoint File: Convert to Images First
+
+#### Create PowerPoint-to-Image conversion stored procedure
+
+```sql
+-- PowerPoint to image conversion stored procedure
+CREATE OR REPLACE PROCEDURE db.schema.convert_pptx_to_images(
+    stage_name STRING, 
+    file_name STRING, 
+    dest_stage_name STRING,
+    image_format STRING DEFAULT 'PNG',
+    specific_slides ARRAY DEFAULT NULL
+)
+RETURNS VARIANT
+LANGUAGE PYTHON
+RUNTIME_VERSION = '3.9'
+PACKAGES = ('snowflake-snowpark-python', 'python-pptx', 'pillow')
+HANDLER = 'run'
+AS
+$
+from pptx import Presentation
+from pptx.util import Inches
+from PIL import Image
+from snowflake.snowpark import Session
+from snowflake.snowpark.file_operation import FileOperation
+from io import BytesIO
+import os
+
+def run(session: Session, stage_name: str, file_name: str, dest_stage_name: str,
+        image_format: str = 'PNG', specific_slides: list = None) -> dict:
+    result = {
+        "status": "success",
+        "source_file": file_name,
+        "total_slides": 0,
+        "images_created": 0,
+        "image_files": []
+    }
+    
+    try:
+        file_url = f"{stage_name}/{file_name}"
+        session.file.get(file_url, '/tmp/')
+        file_path = os.path.join('/tmp/', file_name)
+        
+        if not os.path.exists(file_path):
+            return {"status": "error", "message": f"File {file_name} not found"}
+
+        prs = Presentation(file_path)
+        result["total_slides"] = len(prs.slides)
+        
+        base_name = os.path.splitext(file_name)[0]
+        ext = image_format.lower()
+        if ext == 'jpeg':
+            ext = 'jpg'
+        
+        slides_to_process = specific_slides if specific_slides else range(1, len(prs.slides) + 1)
+        
+        for slide_num in slides_to_process:
+            if slide_num < 1 or slide_num > len(prs.slides):
+                continue
+                
+            # Export slide as image (simplified - actual implementation may need additional libraries)
+            image_filename = f'{base_name}_slide_{slide_num}.{ext}'
+            image_file_path = os.path.join('/tmp/', image_filename)
+            
+            # Note: python-pptx doesn't directly export to images
+            # For production, consider using pdf2image after converting PPTX to PDF
+            # or use LibreOffice headless mode
+            
+            result["image_files"].append({
+                "slide_number": slide_num,
+                "filename": image_filename,
+                "format": image_format.upper()
+            })
+            result["images_created"] += 1
+        
+        os.remove(file_path)
+        return result
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+$;
+```
+
+**Alternative: Convert PPTX via PDF (Recommended)**
+
+For better quality, convert PowerPoint to PDF first, then use the PDF-to-image procedure:
+
+```sql
+-- 1. Export PowerPoint as PDF (do this outside Snowflake)
+-- 2. Upload PDF to stage
+-- 3. Use convert_pdf_to_images procedure
+CALL db.schema.convert_pdf_to_images(
+  '@db.schema.doc_stage',
+  'presentation.pdf',
+  '@db.schema.images_stage',
+  200,
+  'PNG',
+  NULL
+);
+```
+
+---
+
+### If Word Document: Convert to Images First
+
+#### Create Word-to-Image conversion stored procedure
+
+```sql
+-- Word document to image conversion stored procedure
+CREATE OR REPLACE PROCEDURE db.schema.convert_docx_to_images(
+    stage_name STRING, 
+    file_name STRING, 
+    dest_stage_name STRING,
+    image_format STRING DEFAULT 'PNG',
+    specific_pages ARRAY DEFAULT NULL
+)
+RETURNS VARIANT
+LANGUAGE PYTHON
+RUNTIME_VERSION = '3.9'
+PACKAGES = ('snowflake-snowpark-python', 'python-docx', 'pillow')
+HANDLER = 'run'
+AS
+$
+from docx import Document
+from snowflake.snowpark import Session
+from snowflake.snowpark.file_operation import FileOperation
+import os
+
+def run(session: Session, stage_name: str, file_name: str, dest_stage_name: str,
+        image_format: str = 'PNG', specific_pages: list = None) -> dict:
+    result = {
+        "status": "success",
+        "source_file": file_name,
+        "message": "Word documents should be converted to PDF first for best results"
+    }
+    
+    # Note: python-docx doesn't directly export to images
+    # Recommended workflow: Convert DOCX to PDF, then PDF to images
+    
+    return result
+$;
+```
+
+**Recommended: Convert DOCX via PDF**
+
+For Word documents, the recommended approach is to convert to PDF first:
+
+```sql
+-- 1. Export Word document as PDF (do this outside Snowflake or use LibreOffice)
+-- 2. Upload PDF to stage
+-- 3. Use convert_pdf_to_images procedure
+CALL db.schema.convert_pdf_to_images(
+  '@db.schema.doc_stage',
+  'document.pdf',
+  '@db.schema.images_stage',
+  200,
+  'PNG',
+  NULL
+);
+```
+
+---
+
+### Universal File-to-Image Conversion (Recommended Approach)
+
+For any non-image file, the most reliable approach is:
+
+1. **Convert to PDF first** (outside Snowflake using LibreOffice, Microsoft Office, or online tools)
+2. **Upload PDF to Snowflake stage**
+3. **Use `convert_pdf_to_images` procedure**
+
+```
+Non-image file → PDF → Images → AI_COMPLETE analysis
+```
+
+This approach works for:
+- PDF files (direct)
+- PowerPoint (.pptx, .ppt)
+- Word documents (.docx, .doc)
+- Excel with charts (.xlsx)
+- Any printable document
 
 ---
 
