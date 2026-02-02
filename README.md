@@ -8,7 +8,7 @@ A single comprehensive skill for all document/file processing needs:
 
 | Skill | Purpose |
 |-------|---------|
-| `document-intelligence` | Complete document/file workflow - extraction, parsing, visual analysis, pipelines, evaluation |
+| `document-intelligence-coco-desktop` | Complete document/file workflow - extraction, parsing, visual analysis, pipelines, evaluation |
 
 ## Trigger Words
 
