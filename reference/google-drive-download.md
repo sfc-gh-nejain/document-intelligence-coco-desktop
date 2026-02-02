@@ -192,14 +192,32 @@ browser_snapshot()
 # Click "Download" in context menu
 browser_click(element="Download menu item")
 
+# IMPORTANT: Check if "Save" dialog appears (some browser configurations)
+# Wait briefly to see if Save dialog appears
+browser_wait_for(time=2)
+
+# Take snapshot to check current state
+snapshot = browser_snapshot()
+
+# If "Save" button is visible, click it
+if 'Save' in snapshot and 'button' in snapshot:
+    browser_click(element="Save button")
+    # Wait for actual download to start
+    browser_wait_for(time=1)
+
 # Browser will initiate download
 # For multiple files, Google Drive creates a ZIP file
 ```
 
 **Expected Behavior:**
-- Single file → Downloads directly
-- Multiple files → Google Drive creates ZIP, then downloads
+- Single file → Downloads directly (or shows Save dialog)
+- Multiple files → Google Drive creates ZIP, then downloads (or shows Save dialog)
 - Large folders → May show "Preparing download..." progress
+
+**Note:** If the browser shows a "Save" dialog every time:
+- This means automatic downloads are disabled in browser settings
+- The skill will detect and click "Save" automatically
+- For permanent fix, see Error Handling section: "Browser shows Save dialog"
 
 ### Handle Download Preparation
 
@@ -383,6 +401,41 @@ Please:
 1. Log in to your Google account in the browser
 2. Navigate to your folder
 3. Let me know when ready to proceed
+```
+
+**Issue: Browser shows "Save" dialog instead of auto-downloading**
+```
+CoCo Desktop agentic browser is prompting to save each file.
+
+Solution - Configure Browser for Automatic Downloads:
+
+Option 1: Browser Settings (if accessible)
+1. Open browser settings/preferences
+2. Navigate to Downloads section
+3. Disable "Ask where to save each file before downloading"
+4. Confirm default download location is set to ~/Downloads
+
+Option 2: Workaround with Manual Click
+If automatic downloads can't be enabled:
+1. Skill clicks Download menu item
+2. Wait for "Save" dialog to appear
+3. Skill clicks "Save" button automatically
+4. Continue with download monitoring
+
+Implementation for workaround:
+```python
+# After clicking Download, wait for Save dialog
+browser_wait_for(text="Save", timeout=3)
+
+# Click Save button
+browser_click(element="Save button")
+
+# Continue monitoring download
+```
+
+Option 3: Use CLI/API Download (alternative)
+- Use Google Drive API with Python instead of browser automation
+- Requires API credentials but more reliable for bulk downloads
 ```
 
 **Issue: Download blocked or failed**
