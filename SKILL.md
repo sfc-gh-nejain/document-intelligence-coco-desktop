@@ -1,5 +1,5 @@
 ---
-name: document-intelligence
+name: document-intelligence-coco-desktop
 description: |
   **[REQUIRED]** For **ALL** document/file extraction, parsing, or processing tasks with Snowflake Cortex AI.
   Use when: extracting data from PDFs, parsing documents/files, processing invoices/contracts/reports, 
@@ -30,6 +30,7 @@ This skill uses reference documentation for detailed function guidance:
 | **Parsing** | `reference/parsing.md` | Flow B: Full content parsing workflow |
 | **Visual Analysis** | `reference/visual-analysis.md` | Flow C: Charts, blueprints, diagrams analysis |
 | **Pipeline** | `reference/pipeline.md` | Post-processing: pipelines, storage |
+| **Google Drive Download** | `reference/google-drive-download.md` | Automated bulk download from Google Drive folders |
 
 **Load sub-skill based on user's extraction goal:**
 - For structured fields/tables → Read `reference/extraction.md`
@@ -141,6 +142,16 @@ Let's start with [first flow]. After that completes, I'll proceed to the next.
 
 ### Step 2: Get File Location
 
+#### Detect CoCo Desktop Environment First
+
+**Check if running in CoCo Desktop with browser capability:**
+
+Use browser_tabs() tool to detect browser availability.
+
+**If CoCo Desktop detected:**
+- Check for open browser tabs with Google Drive (drive.google.com)
+- If Google Drive folder is open → Offer automated bulk download (see below)
+
 **Ask** user where their file is stored:
 
 ```
@@ -148,8 +159,9 @@ Where is your file located?
 Options:
 1. Snowflake stage (e.g., @my_db.my_schema.my_stage/file.pdf)
 2. Local file on my computer
-3. External stage (S3, Azure Blob, GCS)
-4. Cloud storage (Google Drive, Dropbox, SharePoint, OneDrive, Box)
+3. Google Drive folder (bulk download) - [CoCo Desktop only]
+4. External stage (S3, Azure Blob, GCS)
+5. Cloud storage connector (Google Drive, Dropbox, SharePoint, OneDrive, Box)
 ```
 
 **If Snowflake stage:** Get the full stage path and proceed.
@@ -169,7 +181,13 @@ PUT file:///path/to/file.pdf @my_db.my_schema.doc_stage AUTO_COMPRESS=FALSE;
 LIST @my_db.my_schema.doc_stage;
 ```
 
-**If cloud storage:** Load the `openflow` skill to set up a connector, then return here.
+**If Google Drive folder (bulk download):** Load `reference/google-drive-download.md` for automated workflow:
+- Detects if browser already has Google Drive folder open
+- If not, asks for Google Drive folder URL
+- Automates: Select all (Cmd+A) → Right-click Download → Upload to Snowflake stage
+- Returns list of staged file paths for processing
+
+**If cloud storage connector:** Load the `openflow` skill to set up a connector, then return here.
 
 ### Step 3: Infer File Type from Extension
 
