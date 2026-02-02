@@ -27,7 +27,7 @@ The skill is triggered by mentions of:
 ## Directory Structure
 
 ```
-document-intelligence/
+document-intelligence-coco-desktop/
 ├── SKILL.md                                    # Main skill (entry point)
 ├── README.md                                   # This file
 └── reference/
@@ -36,7 +36,8 @@ document-intelligence/
     ├── extraction.md                           # Flow A: Structured field/table extraction
     ├── parsing.md                              # Flow B: Full content parsing
     ├── visual-analysis.md                      # Flow C: Charts, blueprints, diagrams
-    └── pipeline.md                             # Post-processing: pipelines, storage
+    ├── pipeline.md                             # Post-processing: pipelines, storage
+    └── google-drive-download.md                # Google Drive bulk download automation
 ```
 
 ## Sub-Skills
@@ -100,29 +101,40 @@ See [official documentation](https://docs.snowflake.com/en/user-guide/snowflake-
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- STEP 1: FILE LOCATION
+ STEP 1: FILE LOCATION (WITH GOOGLE DRIVE AUTOMATION)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
    Where is your file?
 
-   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-   │  Snowflake  │   │    Local    │   │  External   │   │   Cloud     │
-   │    Stage    │   │    File     │   │    Stage    │   │  Storage    │
-   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘
-          │                 │                 │                 │
-          │                 ▼                 │                 ▼
-          │          ┌─────────────┐          │          ┌─────────────┐
-          │          │ PUT command │          │          │  openflow   │
-          │          │ SnowSQL/CLI │          │          │   skill     │
-          │          └──────┬──────┘          │          └──────┬──────┘
-          │                 │                 │                 │
-          └─────────────────┴─────────────────┴─────────────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │ Files in Snowflake  │
-                         │       Stage         │
-                         └─────────────────────┘
+   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+   │  Snowflake  │   │    Local    │   │ Google Drive│   │  External   │   │   Cloud     │
+   │    Stage    │   │    File     │   │   Folder    │   │    Stage    │   │  Storage    │
+   │             │   │             │   │  (CoCo)     │   │             │   │  Connector  │
+   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘
+          │                 │                 │                 │                 │
+          │                 ▼                 ▼                 │                 ▼
+          │          ┌─────────────┐   ┌─────────────┐          │          ┌─────────────┐
+          │          │ PUT command │   │  Cmd+A →    │          │          │  openflow   │
+          │          │ SnowSQL/CLI │   │  Download → │          │          │   skill     │
+          │          │             │   │  Extract →  │          │          │             │
+          │          └──────┬──────┘   │  PUT Upload │          │          └──────┬──────┘
+          │                 │          └──────┬──────┘          │                 │
+          │                 │                 │                 │                 │
+          └─────────────────┴─────────────────┴─────────────────┴─────────────────┘
+                                              │
+                                              ▼
+                                   ┌─────────────────────┐
+                                   │ Files in Snowflake  │
+                                   │       Stage         │
+                                   └─────────────────────┘
+
+   NEW: Google Drive Bulk Download (CoCo Desktop Only)
+   • Detects if Google Drive folder is already open in browser
+   • If not, opens provided Google Drive URL
+   • Automates: Cmd+A → Right-click → Download
+   • Waits for ZIP download and extraction
+   • Uploads all files to Snowflake stage via PUT
+   • Returns list of staged file paths
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -679,15 +691,50 @@ session.file.put('/path/to/file.pdf', '@my_stage', auto_compress=False)
 - `SNOWFLAKE.CORTEX_USER` database role granted
 - Files in Snowflake stage
 
+## Google Drive Automation (CoCo Desktop)
+
+This edition includes automated bulk download from Google Drive folders:
+
+### Prerequisites
+- CoCo Desktop app with agentic browser capability
+- User authenticated to Google Drive
+- Snowflake stage configured for file uploads
+
+### Workflow
+```
+1. User has Google Drive folder open (or provides URL)
+   ↓
+2. Skill detects CoCo Desktop environment and browser state
+   ↓
+3. Automated steps:
+   • Cmd+A (select all files)
+   • Right-click → Download
+   • Wait for ZIP creation and download
+   • Extract ZIP to local folder
+   • Upload all files to Snowflake stage via PUT
+   ↓
+4. Files ready for extraction/parsing workflows
+```
+
+### Supported Platforms
+- **macOS**: Cmd+A, ~/Downloads/
+- **Windows**: Ctrl+A, %USERPROFILE%\Downloads\
+- **Linux**: Ctrl+A, ~/Downloads/
+
+### Error Handling
+- Authentication failures → Prompts user to log in manually
+- Download failures → Fallbacks to openflow or manual upload
+- Large folders → Shows progress, handles ZIP creation delays
+
 ## Installation
 
 Install using Cortex Code CLI:
 
 ```bash
-cortex skill add https://github.com/sfc-gh-nejain/document-intelligence-skill
+cortex skill add https://github.com/sfc-gh-nejain/document-intelligence-coco-desktop
 ```
 
-Invoke with: `/document-intelligence`
+Invoke with: `/document-intelligence-coco-desktop`
 
 ## License
 
